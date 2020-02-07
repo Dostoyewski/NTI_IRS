@@ -4,7 +4,10 @@ import sim
 import time, math
 # image processing
 import numpy as np
-import cv2 
+import cv2
+from kinematics import inv_kin
+
+KOEF = [-0.8380, 0.3498, 0.1890]
 
 rad = math.radians
 JOINT_NO = 6
@@ -37,7 +40,8 @@ if err == -1: print ('No gripper')
 ############################# Configure and run #############################
         
 # initial position
-initial = [0,0,rad(-90),0,rad(90),0]
+#initial = [0,0,rad(-90),0,rad(90),0]
+initial = [0,0,rad(90),rad(90),rad(90),0]
         
 # start simulation
 sim.simxStartSimulation(clientID, sim.simx_opmode_blocking)
@@ -64,12 +68,13 @@ print ("Orientation:", orient)
 err,resolution,image = sim.simxGetVisionSensorImage(clientID,cameraID,0,sim.simx_opmode_streaming)
 # read image
 time.sleep(0.2)
-MIN_AREA = 300
+MIN_AREA = 310
 
 firstFrame = None
 prevCenter = None
 movement = None
 counter = 0
+counterIN = 0
 
 while True:
 
@@ -101,6 +106,7 @@ while True:
         # if the contour is too small, ignore it
         if cv2.contourArea(c) < MIN_AREA:
             continue
+        counterIN += 1
 
         (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -111,14 +117,23 @@ while True:
         if prevCenter is not None:
             movement = (center[0] - prevCenter[0], center[1] - prevCenter[1])
             print(movement)
-            movement = (0,0)
             print("center = " + str(center))
             prevCenter = center
+            err,pos = sim.simxGetObjectPosition(clientID,gripperID,-1,sim.simx_opmode_oneshot_wait)
+            if err == -1: print("Can't get position")
+            stale_pos = [-1.3570, 0.1878, -0.1400]
+            theta = inv_kin([pos[0] + KOEF[0] + movement[0]*0.0001, pos[1] + KOEF[1] - movement[1]*0.0001, pos[2] + KOEF[2], 0, 0, 1e-100])
+            firstFrame = None
+            for i in range(JOINT_NO):
+                sim.simxSetJointTargetPosition(clientID, jointID[i], theta[i], sim.simx_opmode_oneshot_wait)
         else:
             prevCenter = center
 
 
     cv2.imshow("result", frame)
+
+    if counter > counterIN:
+        pass
 
     key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):

@@ -114,7 +114,7 @@ def HTM(i, theta):
 
 # Inverse Kinematics
 
-def inv_kin(p, q_d, i_unit='r', o_unit='r'):
+def inv_kin(p, q_d=[0, 0, 0, 0, 0, 0], i_unit='r', o_unit='r'):
     """Solve the joint values based on an HTM.
 
     Args:
@@ -131,7 +131,12 @@ def inv_kin(p, q_d, i_unit='r', o_unit='r'):
     # Preprocessing
     if type(p) == list: # UR format
 #        T_06 = ros2np(ur2ros(p))
-        T_06 = ur2np(p)
+        try:
+            T_06 = ur2np(p)
+        except:
+            T_06 = p
+    else:
+        T_06 = p
 
     if i_unit == 'd':
         q_d = [radians(i) for i in q_d]
@@ -142,7 +147,10 @@ def inv_kin(p, q_d, i_unit='r', o_unit='r'):
     # theta1
     P_05 = T_06[0:3, 3] - d6 * T_06[0:3, 2]
     phi1 = atan2(P_05[1], P_05[0])
-    phi2 = acos(d4 / sqrt(P_05[0] ** 2 + P_05[1] ** 2))
+    try:
+        phi2 = acos(d4 / sqrt(P_05[0] ** 2 + P_05[1] ** 2))
+    except ValueError:
+        return False
     theta1 = [pi / 2 + phi1 + phi2, pi / 2 + phi1 - phi2]
     theta[0:4, 0] = theta1[0]
     theta[4:8, 0] = theta1[1]
@@ -204,11 +212,16 @@ def inv_kin(p, q_d, i_unit='r', o_unit='r'):
 if __name__ == '__main__':
     desired_solution = [1.7499912644507227, -1.8984856734885085, -1.1905715707581692, 0.21869218099676013, 2.9534288849387984, 0.45469538414663446]
         
-    target_pose = [-0.062216135428015254, 0.7551066318135237, 0.8528777013335628, -1.3064880201804807, -1.078867334463253, 1.371140938984445]
+    target_pose = np.matrix([[6.12e-17, 1, -1.22e-16, -7.27e-1],
+                   [-1, 6.12e-17, -3.74e-33, -1.63e-1],
+                   [0, 1.22e-16, 1, 7.91e-1],
+                   [0, 0, 0, 1]])
+
+    target_pose2 = [-7.27e-1, -1.63e-1, 7.91e-1, 0, 0, 1e-100]
         
     print("Joint values in radian")
-    print(inv_kin(target_pose, desired_solution))
+    print(inv_kin(target_pose2, desired_solution))
         
     print("Joint values in degree")
-    print(inv_kin(target_pose, desired_solution, o_unit='d'))
+    print(inv_kin(target_pose2, desired_solution, o_unit='d'))
         
