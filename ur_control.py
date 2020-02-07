@@ -65,9 +65,14 @@ err,resolution,image = sim.simxGetVisionSensorImage(clientID,cameraID,0,sim.simx
 # read image
 time.sleep(0.2)
 MIN_AREA = 270
+
 firstFrame = None
+prevCenter = None
+movement = None
+counter = 0
 
 while True:
+
     err,resolution,image = sim.simxGetVisionSensorImage(clientID,cameraID,0,sim.simx_opmode_buffer)
     # convert byte array to image
     newImg = np.array(image,dtype = np.uint8)
@@ -99,14 +104,23 @@ while True:
 
         (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        print((int(x+w/2), int(y+h/2)))
-        cv2.circle(frame, (int(x + w / 2), int(y + h / 2)), radius=3, color=(0, 255, 0), thickness=-1)
+        center = (int(x+w/2), int(y+h/2))
+        cv2.circle(frame, (int(x+w/2), int(y+h/2)), radius=3, color=(0, 255, 0), thickness=-1)
 
+        if prevCenter is not None:
+            if counter % 3 == 0:
+                movement = (center[0] - prevCenter[0], center[1] - prevCenter[1])
+        else:
+            prevCenter = center
+
+    print (movement)
     cv2.imshow("result", frame)
 
     key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
         break
+
+    counter += 1
 cv2.destroyAllWindows()
 # save
 # cv2.imwrite('image.png', newImg)
