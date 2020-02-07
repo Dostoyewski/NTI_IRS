@@ -65,6 +65,7 @@ err,resolution,image = sim.simxGetVisionSensorImage(clientID,cameraID,0,sim.simx
 # read image
 time.sleep(0.1)
 MIN_AREA = 200
+firstFrame = None
 
 while True:
     err,resolution,image = sim.simxGetVisionSensorImage(clientID,cameraID,0,sim.simx_opmode_buffer)
