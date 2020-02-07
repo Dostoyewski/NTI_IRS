@@ -63,8 +63,8 @@ print ("Orientation:", orient)
 # open streaming
 err,resolution,image = sim.simxGetVisionSensorImage(clientID,cameraID,0,sim.simx_opmode_streaming)
 # read image
-time.sleep(0.1)
-MIN_AREA = 200
+time.sleep(0.2)
+MIN_AREA = 270
 firstFrame = None
 
 while True:
@@ -74,7 +74,7 @@ while True:
     newImg.resize([resolution[0],resolution[1],3])
 
     # resize the frame, convert it to grayscale, and blur it
-    frame = imutils.resize(newImg, width=resolution[0])
+    frame = imutils.resize(newImg, width=resolution[1])
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
@@ -97,8 +97,10 @@ while True:
         if cv2.contourArea(c) < MIN_AREA:
             continue
 
-    (x, y, w, h) = cv2.boundingRect(c)
-    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        (x, y, w, h) = cv2.boundingRect(c)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        print((int(x+w/2), int(y+h/2)))
+
     cv2.imshow("result", frame)
 
     key = cv2.waitKey(1) & 0xFF
