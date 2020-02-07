@@ -64,7 +64,7 @@ print ("Orientation:", orient)
 err,resolution,image = sim.simxGetVisionSensorImage(clientID,cameraID,0,sim.simx_opmode_streaming)
 # read image
 time.sleep(0.2)
-MIN_AREA = 270
+MIN_AREA = 300
 
 firstFrame = None
 prevCenter = None
@@ -107,13 +107,17 @@ while True:
         center = (int(x+w/2), int(y+h/2))
         cv2.circle(frame, (int(x+w/2), int(y+h/2)), radius=3, color=(0, 255, 0), thickness=-1)
 
+        # if counter % 3 == 0:
         if prevCenter is not None:
-            if counter % 3 == 0:
-                movement = (center[0] - prevCenter[0], center[1] - prevCenter[1])
+            movement = (center[0] - prevCenter[0], center[1] - prevCenter[1])
+            print(movement)
+            movement = (0,0)
+            print("center = " + str(center))
+            prevCenter = center
         else:
             prevCenter = center
 
-    print (movement)
+
     cv2.imshow("result", frame)
 
     key = cv2.waitKey(1) & 0xFF
